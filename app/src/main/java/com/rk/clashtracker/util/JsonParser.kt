@@ -79,6 +79,38 @@ object JsonParser {
         return loadDetailedMapping(assetManager)[id]
     }
 
+    fun extractTagFromJson(jsonStr: String): String? {
+        val trimmed = jsonStr.trim()
+        if (trimmed.isEmpty()) return null
+
+        val regex = """" (?:tag|accountTag|playerTag)"\s*:\s*"([^"]+)"""".toRegex(RegexOption.IGNORE_CASE)
+        val match = regex.find(trimmed)
+        if (match != null) {
+            val tagVal = match.groupValues[1].trim()
+            if (tagVal.isNotEmpty()) return tagVal
+        }
+
+        try {
+            if (trimmed.startsWith("{")) {
+                val obj = JSONObject(trimmed)
+                if (obj.has("tag")) return obj.optString("tag", "").trim().ifEmpty { null }
+                if (obj.has("accountTag")) return obj.optString("accountTag", "").trim().ifEmpty { null }
+                if (obj.has("playerTag")) return obj.optString("playerTag", "").trim().ifEmpty { null }
+            }
+        } catch (e: Exception) {
+            // ignore
+        }
+
+        val hashTagRegex = """"([#][A-Za-z0-9]{3,})"""".toRegex()
+        val hashMatch = hashTagRegex.find(trimmed)
+        if (hashMatch != null) {
+            val tagVal = hashMatch.groupValues[1].trim()
+            if (tagVal.isNotEmpty()) return tagVal
+        }
+
+        return null
+    }
+
     fun parseJsonUpgrades(assetManager: AssetManager, jsonStr: String): List<ExtractedUpgrade> {
         val list = mutableListOf<ExtractedUpgrade>()
         val trimmed = jsonStr.trim()

@@ -147,7 +147,8 @@ object UpgradeScheduler {
         id: Int,
         accountTag: String,
         structureName: String,
-        targetLevel: Int
+        targetLevel: Int,
+        accountName: String? = null
     ) {
         createNotificationChannel(context)
 
@@ -161,9 +162,22 @@ object UpgradeScheduler {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
+        val displayVillageName = if (!accountName.isNullOrBlank()) {
+            accountName
+        } else {
+            kotlinx.coroutines.runBlocking(kotlinx.coroutines.Dispatchers.IO) {
+                try {
+                    val db = ClashDatabase.getDatabase(context)
+                    db.clashDao().getAccountByTag(accountTag)?.name
+                } catch (e: Exception) {
+                    null
+                }
+            } ?: accountTag
+        }
+
         val levelStr = if (targetLevel > 0) " to Level $targetLevel" else ""
         val title = "Upgrade Finished! 🔨"
-        val text = "[$accountTag] $structureName upgrade$levelStr is complete!"
+        val text = "[$displayVillageName] $structureName upgrade$levelStr is complete!"
 
         val appIconLarge = BitmapFactory.decodeResource(context.resources, R.mipmap.ic_launcher)
 

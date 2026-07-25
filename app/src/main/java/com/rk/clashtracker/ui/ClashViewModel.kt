@@ -23,7 +23,10 @@ import kotlinx.coroutines.launch
 sealed interface ParseState {
     object Idle : ParseState
     object Loading : ParseState
-    data class Success(val upgrades: List<JsonParser.ExtractedUpgrade>) : ParseState
+    data class Success(
+        val upgrades: List<JsonParser.ExtractedUpgrade>,
+        val extractedTag: String? = null
+    ) : ParseState
     data class Error(val message: String) : ParseState
 }
 
@@ -309,11 +312,12 @@ class ClashViewModel(
         viewModelScope.launch {
             _parseState.value = ParseState.Loading
             try {
+                val extractedTag = JsonParser.extractTagFromJson(jsonText)
                 val results = JsonParser.parseJsonUpgrades(getApplication<Application>().assets, jsonText)
                 if (results.isEmpty()) {
                     _parseState.value = ParseState.Error("No valid upgrades found in JSON. Format: {\"data\":1000014,\"lvl\":2,\"timer\":25479}")
                 } else {
-                    _parseState.value = ParseState.Success(results)
+                    _parseState.value = ParseState.Success(results, extractedTag)
                 }
             } catch (e: Exception) {
                 Log.e("ClashViewModel", "Manual JSON parsing failed", e)

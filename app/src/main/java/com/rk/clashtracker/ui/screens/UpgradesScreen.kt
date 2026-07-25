@@ -30,6 +30,8 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontFamily
@@ -1278,6 +1280,7 @@ fun ImportJsonDialog(
 ) {
     var jsonText by remember { mutableStateOf("") }
     var errorText by remember { mutableStateOf("") }
+    val clipboardManager = LocalClipboardManager.current
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -1314,25 +1317,89 @@ fun ImportJsonDialog(
             }
         },
         confirmButton = {
-            Button(
-                onClick = {
-                    if (jsonText.isBlank()) {
-                        errorText = "Please paste a JSON array or object."
-                    } else {
-                        onImport(jsonText)
-                    }
-                },
-                colors = ButtonDefaults.buttonColors(containerColor = ClashGold),
-                modifier = Modifier.testTag("json_confirm_import_button")
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Text("Process", color = Color.Black, fontWeight = FontWeight.Bold)
+                OutlinedButton(
+                    onClick = onDismiss,
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = TextSecondary),
+                    border = BorderStroke(1.dp, TextSecondary.copy(alpha = 0.5f)),
+                    contentPadding = PaddingValues(horizontal = 4.dp, vertical = 8.dp),
+                    modifier = Modifier
+                        .weight(1f)
+                        .testTag("json_cancel_button")
+                ) {
+                    Text(
+                        text = "Cancel",
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+
+                OutlinedButton(
+                    onClick = {
+                        val clip = clipboardManager.getText()
+                        if (clip != null && clip.text.isNotEmpty()) {
+                            jsonText = clip.text
+                            errorText = ""
+                        } else {
+                            errorText = "Clipboard is empty!"
+                        }
+                    },
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = ClashGold),
+                    border = BorderStroke(1.dp, ClashGold),
+                    contentPadding = PaddingValues(horizontal = 4.dp, vertical = 8.dp),
+                    modifier = Modifier
+                        .weight(1f)
+                        .testTag("json_paste_clipboard_button")
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.ContentPaste,
+                        contentDescription = "Paste",
+                        tint = ClashGold,
+                        modifier = Modifier.size(14.dp)
+                    )
+                    Spacer(modifier = Modifier.width(3.dp))
+                    Text(
+                        text = "Paste",
+                        color = ClashGold,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+
+                Button(
+                    onClick = {
+                        if (jsonText.isBlank()) {
+                            errorText = "Please paste a JSON array or object."
+                        } else {
+                            onImport(jsonText)
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = ClashGold),
+                    contentPadding = PaddingValues(horizontal = 4.dp, vertical = 8.dp),
+                    modifier = Modifier
+                        .weight(1f)
+                        .testTag("json_confirm_import_button")
+                ) {
+                    Text(
+                        text = "Proceed",
+                        color = Color.Black,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
             }
         },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Cancel", color = ClashGold)
-            }
-        },
+        dismissButton = null,
         containerColor = ClashSlate
     )
 }
@@ -1345,8 +1412,20 @@ fun ReviewImportDialog(
     onDismiss: () -> Unit,
     onConfirmImport: (accountTag: String, selectedUpgrades: List<JsonParser.ExtractedUpgrade>) -> Unit
 ) {
-    val initialAccount = remember(defaultAccountTag, accounts) {
-        if (defaultAccountTag.isNotEmpty() && accounts.any { it.tag == defaultAccountTag }) {
+    val initialAccount = remember(defaultAccountTag, accounts, parseState) {
+        val extractedTag = (parseState as? ParseState.Success)?.extractedTag
+        val matchedAccount = if (!extractedTag.isNullOrBlank()) {
+            val cleanExtracted = extractedTag.uppercase().trim()
+            val cleanNoHash = cleanExtracted.trimStart('#')
+            accounts.find { acc ->
+                val accTag = acc.tag.uppercase().trim()
+                accTag == cleanExtracted || accTag.trimStart('#') == cleanNoHash
+            }
+        } else null
+
+        if (matchedAccount != null) {
+            matchedAccount.tag
+        } else if (defaultAccountTag.isNotEmpty() && accounts.any { it.tag == defaultAccountTag }) {
             defaultAccountTag
         } else {
             accounts.firstOrNull()?.tag ?: ""

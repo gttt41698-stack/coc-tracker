@@ -68,18 +68,26 @@ class LiveProgressService : Service() {
                     return@collectLatest
                 }
 
+                val accountNameMap = try {
+                    dao.getAllAccounts().associate { it.tag to it.name }
+                } catch (e: Exception) {
+                    emptyMap()
+                }
+
                 while (isActive) {
                     var listChanged = false
                     val updatedList = liveUpgrades.map { upgrade ->
                         val remaining = upgrade.remainingSeconds
                         if (remaining <= 0) {
+                            val vName = accountNameMap[upgrade.accountTag] ?: upgrade.accountTag
                             UpgradeScheduler.showNotification(
                                 applicationContext,
                                 notificationManager,
                                 upgrade.id,
                                 upgrade.accountTag,
                                 upgrade.structureName,
-                                upgrade.targetLevel ?: -1
+                                upgrade.targetLevel ?: -1,
+                                vName
                             )
                             val completedUpgrade = upgrade.copy(
                                 isCompleted = true,
@@ -107,7 +115,7 @@ class LiveProgressService : Service() {
                         break
                     }
 
-                    updateNotifications(activeTracking, notificationManager)
+                    updateNotifications(activeTracking, notificationManager, accountNameMap)
 
                     val minRemaining = activeTracking.minOfOrNull { it.remainingSeconds } ?: 0L
                     val delayMs = when {
@@ -122,7 +130,11 @@ class LiveProgressService : Service() {
         }
     }
 
-    private fun updateNotifications(liveUpgrades: List<UpgradeEntity>, notificationManager: NotificationManager) {
+    private fun updateNotifications(
+        liveUpgrades: List<UpgradeEntity>,
+        notificationManager: NotificationManager,
+        accountNameMap: Map<String, String>
+    ) {
         if (liveUpgrades.isEmpty()) {
             stopForeground(true)
             stopSelf()
@@ -131,7 +143,8 @@ class LiveProgressService : Service() {
 
         // Show all live upgrades as normal notifications with their respective progress
         liveUpgrades.forEach { upgrade ->
-            val notification = buildProgressNotification(upgrade)
+            val vName = accountNameMap[upgrade.accountTag] ?: upgrade.accountTag
+            val notification = buildProgressNotification(upgrade, vName)
             try {
                 notificationManager.notify(upgrade.id + 10000, notification)
             } catch (e: Exception) {
@@ -170,13 +183,13 @@ class LiveProgressService : Service() {
         }
     }
 
-    private fun buildProgressNotification(upgrade: UpgradeEntity): Notification {
+    private fun buildProgressNotification(upgrade: UpgradeEntity, villageName: String): Notification {
         val progressPercent = (upgrade.progress * 100).toInt()
         val remainingStr = formatSecondsToDuration(upgrade.remainingSeconds)
 
         val levelStr = if (upgrade.targetLevel != null && upgrade.targetLevel > 0) " (Lvl ${upgrade.targetLevel})" else ""
         val title = "🔨 Upgrading ${upgrade.structureName}$levelStr"
-        val text = "Progress: $progressPercent% | $remainingStr left"
+        val text = "[$villageName] Progress: $progressPercent% | $remainingStr left"
 
         val appIconLarge = BitmapFactory.decodeResource(resources, R.mipmap.ic_launcher)
 

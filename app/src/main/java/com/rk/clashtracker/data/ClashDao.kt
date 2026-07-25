@@ -9,6 +9,9 @@ interface ClashDao {
     @Query("SELECT * FROM accounts ORDER BY lastUpdated DESC")
     fun getAllAccountsFlow(): Flow<List<AccountEntity>>
 
+    @Query("SELECT * FROM accounts")
+    suspend fun getAllAccounts(): List<AccountEntity>
+
     @Query("SELECT * FROM accounts WHERE tag = :tag LIMIT 1")
     suspend fun getAccountByTag(tag: String): AccountEntity?
 
