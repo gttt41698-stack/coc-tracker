@@ -14,6 +14,7 @@
     "1000044": "Cannon",
     "1000045": "Multi Mortar",
     "1000046": "Star Laboratory",
+    "1000047": "B.O.T.O's Shack",
     "1000048": "Archer Tower",
     "1000049": "Reinforcement Camp",
     "1000050": "Firecrackers",
@@ -138,8 +139,21 @@
     "103000008": "Roaster",
     "103000009": "Air Bombs",
     "103000010": "Lava Launcher",
+    "103000011": "Hot Candle",
+    "103000033": "Hot Candle - HP",
+    "102000034": "Hot Candle - DPS",
+    "102000035": "Hot Candle - TSA",
+    "103000012": "Hero Hunter",
+    "102000036": "Hero Hunter Hitpoints",
+    "102000037": "Hero Hunter DPS",
+    "102000038": "Hero Hunter PSL",
+    "103000013": "Cake-A-Pult",
+    "102000039": "Cake-A-Pult Hitpoints",
+    "102000040": "Cake-A-Pult DPH",
+    "102000041": "Cake-A-Pult ED",
     "107000000": "Longshot",
-    "107000001": "Smasher"
+    "107000001": "Smasher",
+    "107000008": "Logger"
   },
   "th_troops": {
     "4000000": "Barbarian",
@@ -175,12 +189,14 @@
     "4000092": "Battle Drill",
     "4000095": "Electro Titan",
     "4000097": "Apprentice Warden",
+    "4000109": "Ruin Witch",
     "4000110": "Root Rider",
     "4000123": "Druid",
     "4000132": "Thrower",
     "4000135": "Troop Launcher",
     "4000150": "Furnace",
     "4000177": "Meteor Golem",
+    "4000188": "Sky Wagon",
     "26000000": "Lightning Spell",
     "26000001": "Healing Spell",
     "26000002": "Rage Spell",
@@ -197,6 +213,7 @@
     "26000070": "Overgrowth Spell",
     "26000098": "Revive Spell",
     "26000109": "Ice Block Spell",
-    "26000120": "Totem Spell"
+    "26000120": "Totem Spell",
+    "26000123": "Angry Spell"
   }
 }
